@@ -79,6 +79,31 @@ values ('Fondo General', 'Ingresos y gastos generales de la iglesia'),
        ('Fondo de Construcción', 'Ofrendas y gastos de proyectos de infraestructura')
 on conflict (nombre) do nothing;
 
+create table if not exists public.categorias_financieras (
+  id uuid primary key default gen_random_uuid(),
+  nombre text not null,
+  tipo text not null check (tipo in ('ingreso','gasto')),
+  activa boolean not null default true,
+  unique (nombre, tipo)
+);
+
+insert into public.categorias_financieras (nombre, tipo)
+values
+  ('Ofrenda de servicio', 'ingreso'),
+  ('Ofrenda de células', 'ingreso'),
+  ('Diezmos', 'ingreso'),
+  ('Donación especial', 'ingreso'),
+  ('Energía eléctrica', 'gasto'),
+  ('Agua', 'gasto'),
+  ('Mantenimiento', 'gasto'),
+  ('Material para niños', 'gasto'),
+  ('Renta de local', 'gasto'),
+  ('Misiones', 'gasto'),
+  ('Ayuda social', 'gasto'),
+  ('Otro', 'ingreso'),
+  ('Otro', 'gasto')
+on conflict (nombre, tipo) do nothing;
+
 create table if not exists public.movimientos_financieros (
   id uuid primary key default gen_random_uuid(),
   tipo text not null check (tipo in ('ingreso','gasto')),
@@ -230,6 +255,15 @@ create policy "editar reportes propios" on public.reportes_celula for update usi
 -- Fondos: lectura abierta, escritura solo finanzas/admin
 create policy "leer fondos" on public.fondos for select using (auth.uid() is not null);
 create policy "gestionar fondos" on public.fondos for all using (public.mi_rol() in ('admin','finanzas'));
+
+-- Categorías financieras: visibles para quien registra movimientos, editables por admin/pastor/finanzas
+alter table public.categorias_financieras enable row level security;
+create policy "leer categorias financieras" on public.categorias_financieras for select using (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
+create policy "gestionar categorias financieras" on public.categorias_financieras for all using (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
 
 -- Movimientos financieros: solo admin/pastor/finanzas
 create policy "ver movimientos" on public.movimientos_financieros for select using (

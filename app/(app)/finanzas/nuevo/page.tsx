@@ -1,9 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { crearMovimiento } from "@/lib/actions";
+import MovimientoTipoCategoria from "@/components/MovimientoTipoCategoria";
 
 export default async function NuevoMovimientoPage() {
   const supabase = createClient();
   const { data: fondos } = await supabase.from("fondos").select("id, nombre").order("nombre");
+  const { data: categorias } = await supabase
+    .from("categorias_financieras")
+    .select("id, nombre, tipo")
+    .eq("activa", true)
+    .order("nombre");
   const hoy = new Date().toISOString().slice(0, 10);
 
   return (
@@ -11,23 +17,7 @@ export default async function NuevoMovimientoPage() {
       <h1 className="text-2xl font-semibold text-brand-950 mb-6">Nuevo movimiento financiero</h1>
 
       <form action={crearMovimiento} className="card space-y-4">
-        <div>
-          <label className="label">Tipo</label>
-          <select name="tipo" required className="input">
-            <option value="ingreso">Ingreso</option>
-            <option value="gasto">Gasto</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="label">Categoría</label>
-          <input
-            name="categoria"
-            required
-            className="input"
-            placeholder="Ej. Ofrenda de servicio, Mantenimiento, Misiones"
-          />
-        </div>
+        <MovimientoTipoCategoria categorias={categorias ?? []} />
 
         <div className="grid grid-cols-2 gap-4">
           <div>

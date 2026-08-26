@@ -302,6 +302,18 @@ export async function actualizarConfiguracion(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
+export async function crearCategoriaFinanciera(formData: FormData) {
+  const supabase = createClient();
+
+  const nombre = formData.get("nombre") as string;
+  const tipo = formData.get("tipo") as string;
+
+  await supabase.from("categorias_financieras").insert({ nombre, tipo });
+
+  revalidatePath("/administracion");
+  revalidatePath("/finanzas/nuevo");
+}
+
 export async function crearMovimiento(formData: FormData) {
   const supabase = createClient();
 

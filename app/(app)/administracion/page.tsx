@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion, crearUsuarioConRol, desactivarPersona, reactivarPersona } from "@/lib/actions";
+import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion, crearUsuarioConRol, desactivarPersona, reactivarPersona, crearCategoriaFinanciera } from "@/lib/actions";
 import { getConfiguracion } from "@/lib/config";
 
 export default async function AdministracionPage({
@@ -9,10 +9,10 @@ export default async function AdministracionPage({
   searchParams: { tab?: string };
 }) {
   const supabase = createClient();
-  const validTabs = ["lideres", "supervisores", "celulas", "zonas", "configuracion"];
+  const validTabs = ["lideres", "supervisores", "celulas", "zonas", "categorias", "configuracion"];
   const tab = validTabs.includes(searchParams.tab ?? "") ? (searchParams.tab as string) : "lideres";
 
-  const [{ data: lideres }, { data: supervisores }, { data: celulas }, { data: zonas }, config] = await Promise.all([
+  const [{ data: lideres }, { data: supervisores }, { data: celulas }, { data: zonas }, { data: categoriasFin }, config] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, nombre_completo, telefono, activo, celulas(nombre, zonas(nombre))")
@@ -28,6 +28,7 @@ export default async function AdministracionPage({
       .select("id, nombre, dia_semana, hora, ubicacion, zona_id, lider_id, zonas(nombre), profiles(nombre_completo)")
       .order("nombre"),
     supabase.from("zonas").select("id, nombre, supervisor_id").order("nombre"),
+    supabase.from("categorias_financieras").select("id, nombre, tipo, activa").order("tipo").order("nombre"),
     getConfiguracion(supabase),
   ]);
 
@@ -36,6 +37,7 @@ export default async function AdministracionPage({
     { key: "supervisores", label: "Supervisores" },
     { key: "celulas", label: "Células" },
     { key: "zonas", label: "Zonas" },
+    { key: "categorias", label: "Categorías" },
     { key: "configuracion", label: "Configuración" },
   ];
 
@@ -318,6 +320,62 @@ export default async function AdministracionPage({
               </div>
               <button type="submit" className="btn-primary w-full">
                 Crear zona
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {tab === "categorias" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="card">
+            <h2 className="font-semibold text-brand-950 mb-4">Categorías de Finanzas</h2>
+            <p className="text-brand-500 text-sm mb-4">
+              Son las opciones que verá quien registre un ingreso o gasto — evita que cada quien escriba lo que sea.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-600 mb-2">Ingresos</p>
+                <div className="flex flex-wrap gap-2">
+                  {categoriasFin?.filter((c) => c.tipo === "ingreso").map((c) => (
+                    <span key={c.id} className="text-xs px-2.5 py-1 rounded-full bg-brand-50 text-brand-700">
+                      {c.nombre}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-red-600 mb-2">Gastos</p>
+                <div className="flex flex-wrap gap-2">
+                  {categoriasFin?.filter((c) => c.tipo === "gasto").map((c) => (
+                    <span key={c.id} className="text-xs px-2.5 py-1 rounded-full bg-brand-50 text-brand-700">
+                      {c.nombre}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <h2 className="font-semibold text-brand-950 mb-4">Nueva categoría</h2>
+            <p className="text-brand-500 text-sm mb-4">
+              Para cuando surja un ingreso o gasto que no encaje en las existentes.
+            </p>
+            <form action={crearCategoriaFinanciera} className="space-y-4">
+              <div>
+                <label className="label">Nombre</label>
+                <input name="nombre" required className="input" placeholder="Ej. Reparación de vehículo" />
+              </div>
+              <div>
+                <label className="label">Tipo</label>
+                <select name="tipo" required className="input">
+                  <option value="ingreso">Ingreso</option>
+                  <option value="gasto">Gasto</option>
+                </select>
+              </div>
+              <button type="submit" className="btn-primary w-full">
+                Crear categoría
               </button>
             </form>
           </div>
