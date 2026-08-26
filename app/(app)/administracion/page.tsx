@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion } from "@/lib/actions";
+import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion, crearUsuarioConRol } from "@/lib/actions";
 import { getConfiguracion } from "@/lib/config";
 
 export default async function AdministracionPage({
@@ -64,6 +64,19 @@ export default async function AdministracionPage({
 
       {tab === "lideres" && (
         <div className="card">
+          <details className="mb-4">
+            <summary className="btn-primary inline-flex cursor-pointer text-sm">+ Nuevo líder</summary>
+            <form action={crearUsuarioConRol} className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
+              <input type="hidden" name="role" value="lider" />
+              <input name="nombre_completo" required placeholder="Nombre completo" className="input" />
+              <input name="telefono" placeholder="Teléfono (opcional)" className="input" />
+              <input name="correo" type="email" required placeholder="Correo" className="input sm:col-span-2" />
+              <input name="password" type="text" required placeholder="Contraseña temporal" className="input sm:col-span-2" />
+              <button type="submit" className="btn-primary sm:col-span-2">
+                Crear líder
+              </button>
+            </form>
+          </details>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -106,6 +119,27 @@ export default async function AdministracionPage({
 
       {tab === "supervisores" && (
         <div className="card">
+          <details className="mb-4">
+            <summary className="btn-primary inline-flex cursor-pointer text-sm">+ Nuevo supervisor</summary>
+            <form action={crearUsuarioConRol} className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
+              <input type="hidden" name="role" value="supervisor" />
+              <input name="nombre_completo" required placeholder="Nombre completo" className="input" />
+              <input name="telefono" placeholder="Teléfono (opcional)" className="input" />
+              <select name="zona_id" className="input sm:col-span-2">
+                <option value="">Sin zona asignada</option>
+                {zonas?.map((z) => (
+                  <option key={z.id} value={z.id}>
+                    {z.nombre}
+                  </option>
+                ))}
+              </select>
+              <input name="correo" type="email" required placeholder="Correo" className="input sm:col-span-2" />
+              <input name="password" type="text" required placeholder="Contraseña temporal" className="input sm:col-span-2" />
+              <button type="submit" className="btn-primary sm:col-span-2">
+                Crear supervisor
+              </button>
+            </form>
+          </details>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

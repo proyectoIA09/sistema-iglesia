@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function crearCelula(formData: FormData) {
   const supabase = createClient();
@@ -144,6 +145,53 @@ export async function registrarAporte(proyectoId: string, formData: FormData) {
   });
 
   revalidatePath("/proyectos");
+}
+
+export async function crearUsuarioConRol(formData: FormData) {
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: miPerfil } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id ?? "")
+    .single();
+
+  if (!miPerfil || !["admin", "pastor"].includes(miPerfil.role)) {
+    return;
+  }
+
+  const nombre_completo = formData.get("nombre_completo") as string;
+  const correo = formData.get("correo") as string;
+  const password = formData.get("password") as string;
+  const role = formData.get("role") as string;
+  const telefono = (formData.get("telefono") as string) || null;
+  const zona_id = (formData.get("zona_id") as string) || null;
+
+  const admin = createAdminClient();
+
+  const { data: nuevoUsuario, error } = await admin.auth.admin.createUser({
+    email: correo,
+    password,
+    email_confirm: true,
+  });
+
+  if (error || !nuevoUsuario.user) {
+    return;
+  }
+
+  await admin.from("profiles").insert({
+    id: nuevoUsuario.user.id,
+    nombre_completo,
+    role,
+    telefono,
+    zona_id,
+  });
+
+  revalidatePath("/administracion");
 }
 
 export async function actualizarPersona(personaId: string, formData: FormData) {
