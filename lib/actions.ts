@@ -194,6 +194,43 @@ export async function crearUsuarioConRol(formData: FormData) {
   revalidatePath("/administracion");
 }
 
+async function esAdminActual() {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: miPerfil } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id ?? "")
+    .single();
+  return !!miPerfil && ["admin", "pastor"].includes(miPerfil.role);
+}
+
+export async function desactivarPersona(personaId: string) {
+  if (!(await esAdminActual())) return;
+
+  const supabase = createClient();
+  const admin = createAdminClient();
+
+  await admin.auth.admin.updateUserById(personaId, { ban_duration: "876000h" });
+  await supabase.from("profiles").update({ activo: false }).eq("id", personaId);
+
+  revalidatePath("/administracion");
+}
+
+export async function reactivarPersona(personaId: string) {
+  if (!(await esAdminActual())) return;
+
+  const supabase = createClient();
+  const admin = createAdminClient();
+
+  await admin.auth.admin.updateUserById(personaId, { ban_duration: "none" });
+  await supabase.from("profiles").update({ activo: true }).eq("id", personaId);
+
+  revalidatePath("/administracion");
+}
+
 export async function actualizarPersona(personaId: string, formData: FormData) {
   const supabase = createClient();
 

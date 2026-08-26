@@ -10,6 +10,7 @@ create table if not exists public.profiles (
   role text not null default 'lider' check (role in ('admin','pastor','supervisor','lider','finanzas')),
   zona_id uuid,
   telefono text,
+  activo boolean not null default true,
   creado_en timestamptz not null default now()
 );
 

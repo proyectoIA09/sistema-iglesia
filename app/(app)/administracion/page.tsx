@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion, crearUsuarioConRol } from "@/lib/actions";
+import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion, crearUsuarioConRol, desactivarPersona, reactivarPersona } from "@/lib/actions";
 import { getConfiguracion } from "@/lib/config";
 
 export default async function AdministracionPage({
@@ -15,12 +15,12 @@ export default async function AdministracionPage({
   const [{ data: lideres }, { data: supervisores }, { data: celulas }, { data: zonas }, config] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, nombre_completo, telefono, celulas(nombre, zonas(nombre))")
+      .select("id, nombre_completo, telefono, activo, celulas(nombre, zonas(nombre))")
       .eq("role", "lider")
       .order("nombre_completo"),
     supabase
       .from("profiles")
-      .select("id, nombre_completo, telefono, zonas(nombre)")
+      .select("id, nombre_completo, telefono, activo, zonas(nombre)")
       .eq("role", "supervisor")
       .order("nombre_completo"),
     supabase
@@ -85,6 +85,7 @@ export default async function AdministracionPage({
                   <th className="pb-2 font-medium">Célula</th>
                   <th className="pb-2 font-medium">Zona</th>
                   <th className="pb-2 font-medium">Teléfono</th>
+                  <th className="pb-2 font-medium">Estado</th>
                   <th className="pb-2 font-medium"></th>
                 </tr>
               </thead>
@@ -96,17 +97,41 @@ export default async function AdministracionPage({
                     <td className="py-2.5 text-brand-500">{p.celulas?.[0]?.zonas?.nombre ?? "—"}</td>
                     <td className="py-2.5 text-brand-500">{p.telefono ?? "—"}</td>
                     <td className="py-2.5">
+                      <span
+                        className={`text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded ${
+                          p.activo ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"
+                        }`}
+                      >
+                        {p.activo ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className="py-2.5">
                       <details>
                         <summary className="text-brand-600 text-xs cursor-pointer underline underline-offset-2">
                           Editar
                         </summary>
-                        <form action={actualizarPersona.bind(null, p.id)} className="mt-2 space-y-2 w-56">
-                          <input name="nombre_completo" defaultValue={p.nombre_completo} className="input text-xs py-1.5" />
-                          <input name="telefono" defaultValue={p.telefono ?? ""} placeholder="Teléfono" className="input text-xs py-1.5" />
-                          <button type="submit" className="btn-primary w-full text-xs py-1.5">
-                            Guardar
-                          </button>
-                        </form>
+                        <div className="mt-2 space-y-2 w-56">
+                          <form action={actualizarPersona.bind(null, p.id)} className="space-y-2">
+                            <input name="nombre_completo" defaultValue={p.nombre_completo} className="input text-xs py-1.5" />
+                            <input name="telefono" defaultValue={p.telefono ?? ""} placeholder="Teléfono" className="input text-xs py-1.5" />
+                            <button type="submit" className="btn-primary w-full text-xs py-1.5">
+                              Guardar
+                            </button>
+                          </form>
+                          {p.activo ? (
+                            <form action={desactivarPersona.bind(null, p.id)}>
+                              <button type="submit" className="w-full text-xs py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
+                                Desactivar acceso
+                              </button>
+                            </form>
+                          ) : (
+                            <form action={reactivarPersona.bind(null, p.id)}>
+                              <button type="submit" className="w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-medium">
+                                Reactivar acceso
+                              </button>
+                            </form>
+                          )}
+                        </div>
                       </details>
                     </td>
                   </tr>
@@ -147,6 +172,7 @@ export default async function AdministracionPage({
                   <th className="pb-2 font-medium">Nombre</th>
                   <th className="pb-2 font-medium">Zona a cargo</th>
                   <th className="pb-2 font-medium">Teléfono</th>
+                  <th className="pb-2 font-medium">Estado</th>
                   <th className="pb-2 font-medium"></th>
                 </tr>
               </thead>
@@ -157,17 +183,41 @@ export default async function AdministracionPage({
                     <td className="py-2.5 text-brand-500">{p.zonas?.nombre ?? "—"}</td>
                     <td className="py-2.5 text-brand-500">{p.telefono ?? "—"}</td>
                     <td className="py-2.5">
+                      <span
+                        className={`text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded ${
+                          p.activo ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"
+                        }`}
+                      >
+                        {p.activo ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className="py-2.5">
                       <details>
                         <summary className="text-brand-600 text-xs cursor-pointer underline underline-offset-2">
                           Editar
                         </summary>
-                        <form action={actualizarPersona.bind(null, p.id)} className="mt-2 space-y-2 w-56">
-                          <input name="nombre_completo" defaultValue={p.nombre_completo} className="input text-xs py-1.5" />
-                          <input name="telefono" defaultValue={p.telefono ?? ""} placeholder="Teléfono" className="input text-xs py-1.5" />
-                          <button type="submit" className="btn-primary w-full text-xs py-1.5">
-                            Guardar
-                          </button>
-                        </form>
+                        <div className="mt-2 space-y-2 w-56">
+                          <form action={actualizarPersona.bind(null, p.id)} className="space-y-2">
+                            <input name="nombre_completo" defaultValue={p.nombre_completo} className="input text-xs py-1.5" />
+                            <input name="telefono" defaultValue={p.telefono ?? ""} placeholder="Teléfono" className="input text-xs py-1.5" />
+                            <button type="submit" className="btn-primary w-full text-xs py-1.5">
+                              Guardar
+                            </button>
+                          </form>
+                          {p.activo ? (
+                            <form action={desactivarPersona.bind(null, p.id)}>
+                              <button type="submit" className="w-full text-xs py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
+                                Desactivar acceso
+                              </button>
+                            </form>
+                          ) : (
+                            <form action={reactivarPersona.bind(null, p.id)}>
+                              <button type="submit" className="w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-medium">
+                                Reactivar acceso
+                              </button>
+                            </form>
+                          )}
+                        </div>
                       </details>
                     </td>
                   </tr>
