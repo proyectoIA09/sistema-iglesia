@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { actualizarPersona, actualizarCelula } from "@/lib/actions";
+import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion } from "@/lib/actions";
+import { getConfiguracion } from "@/lib/config";
 
 export default async function AdministracionPage({
   searchParams,
@@ -8,9 +9,10 @@ export default async function AdministracionPage({
   searchParams: { tab?: string };
 }) {
   const supabase = createClient();
-  const tab = searchParams.tab === "supervisores" ? "supervisores" : searchParams.tab === "celulas" ? "celulas" : "lideres";
+  const validTabs = ["lideres", "supervisores", "celulas", "zonas", "configuracion"];
+  const tab = validTabs.includes(searchParams.tab ?? "") ? (searchParams.tab as string) : "lideres";
 
-  const [{ data: lideres }, { data: supervisores }, { data: celulas }, { data: zonas }] = await Promise.all([
+  const [{ data: lideres }, { data: supervisores }, { data: celulas }, { data: zonas }, config] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, nombre_completo, telefono, celulas(nombre, zonas(nombre))")
@@ -25,13 +27,16 @@ export default async function AdministracionPage({
       .from("celulas")
       .select("id, nombre, dia_semana, hora, ubicacion, zona_id, lider_id, zonas(nombre), profiles(nombre_completo)")
       .order("nombre"),
-    supabase.from("zonas").select("id, nombre").order("nombre"),
+    supabase.from("zonas").select("id, nombre, supervisor_id").order("nombre"),
+    getConfiguracion(supabase),
   ]);
 
   const tabs = [
     { key: "lideres", label: "Líderes" },
     { key: "supervisores", label: "Supervisores" },
     { key: "celulas", label: "Células" },
+    { key: "zonas", label: "Zonas" },
+    { key: "configuracion", label: "Configuración" },
   ];
 
   return (
@@ -200,6 +205,73 @@ export default async function AdministracionPage({
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {tab === "zonas" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="card">
+            <h2 className="font-semibold text-brand-950 mb-4">Zonas existentes</h2>
+            <div className="space-y-2">
+              {zonas?.length ? (
+                zonas.map((z) => (
+                  <div key={z.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-brand-50">
+                    <span className="text-sm text-brand-950">{z.nombre}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-brand-400 text-sm text-center py-6">Aún no hay zonas creadas.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="card">
+            <h2 className="font-semibold text-brand-950 mb-4">Nueva zona</h2>
+            <form action={crearZona} className="space-y-4">
+              <div>
+                <label className="label">Nombre de la zona</label>
+                <input name="nombre" required className="input" placeholder="Ej. Zona Norte" />
+              </div>
+              <button type="submit" className="btn-primary w-full">
+                Crear zona
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {tab === "configuracion" && (
+        <div className="card max-w-lg">
+          <h2 className="font-semibold text-brand-950 mb-1">Nombre y logo de la iglesia</h2>
+          <p className="text-brand-500 text-sm mb-5">
+            Esto se muestra en la pantalla de inicio de sesión y en el menú lateral.
+          </p>
+          <form action={actualizarConfiguracion} className="space-y-4" encType="multipart/form-data">
+            <div>
+              <label className="label">Nombre de la iglesia</label>
+              <input
+                name="nombre_iglesia"
+                required
+                defaultValue={config.nombre_iglesia}
+                className="input"
+                placeholder="Ej. Iglesia Generación de Jesús"
+              />
+            </div>
+            <div>
+              <label className="label">Logo</label>
+              {config.logo_url && (
+                <div className="mb-2 w-16 h-16 rounded-xl overflow-hidden border border-brand-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={config.logo_url} alt="Logo actual" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <input name="logo" type="file" accept="image/*" className="input" />
+              <p className="field-hint">Formato cuadrado recomendado (PNG o JPG).</p>
+            </div>
+            <button type="submit" className="btn-primary w-full">
+              Guardar cambios
+            </button>
+          </form>
         </div>
       )}
     </div>

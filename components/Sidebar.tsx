@@ -31,10 +31,14 @@ export default function Sidebar({
   nombre,
   role,
   miCelulaId,
+  nombreIglesia,
+  logoUrl,
 }: {
   nombre: string;
   role: string;
   miCelulaId?: string | null;
+  nombreIglesia?: string;
+  logoUrl?: string | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -58,11 +62,16 @@ export default function Sidebar({
   return (
     <aside className="w-64 shrink-0 bg-brand-950 text-white flex flex-col min-h-screen">
       <div className="px-6 py-6 flex items-center gap-3 border-b border-white/10">
-        <div className="w-9 h-9 rounded-xl bg-gold-500 flex items-center justify-center text-lg">
-          ⛪
+        <div className="w-9 h-9 rounded-xl bg-gold-500 flex items-center justify-center text-lg overflow-hidden shrink-0">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={nombreIglesia ?? ""} className="w-full h-full object-cover" />
+          ) : (
+            "⛪"
+          )}
         </div>
         <div>
-          <p className="font-semibold leading-tight">Sistema de Iglesia</p>
+          <p className="font-semibold leading-tight">{nombreIglesia ?? "Sistema de Iglesia"}</p>
         </div>
       </div>
 
@@ -92,6 +101,9 @@ export default function Sidebar({
         <button onClick={handleLogout} className="btn-secondary w-full bg-transparent border-white/20 text-white hover:bg-white/10">
           Cerrar sesión
         </button>
+        <p className="text-center text-[10px] text-brand-400/70 mt-4">
+          Elaborado por Lic. Hugo Acosta (IA)
+        </p>
       </div>
     </aside>
   );

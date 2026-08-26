@@ -179,6 +179,44 @@ export async function actualizarCelula(celulaId: string, formData: FormData) {
   revalidatePath("/celulas");
 }
 
+export async function crearZona(formData: FormData) {
+  const supabase = createClient();
+
+  const nombre = formData.get("nombre") as string;
+
+  await supabase.from("zonas").insert({ nombre });
+
+  revalidatePath("/administracion");
+  revalidatePath("/celulas");
+}
+
+export async function actualizarConfiguracion(formData: FormData) {
+  const supabase = createClient();
+
+  const nombre_iglesia = formData.get("nombre_iglesia") as string;
+  const logo = formData.get("logo") as File | null;
+
+  const update: { nombre_iglesia: string; logo_url?: string } = { nombre_iglesia };
+
+  if (logo && logo.size > 0) {
+    const extension = logo.name.split(".").pop() || "png";
+    const path = `logo-${Date.now()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("logos")
+      .upload(path, logo, { upsert: true, contentType: logo.type });
+
+    if (!uploadError) {
+      const { data } = supabase.storage.from("logos").getPublicUrl(path);
+      update.logo_url = data.publicUrl;
+    }
+  }
+
+  await supabase.from("configuracion").update(update).eq("id", 1);
+
+  revalidatePath("/", "layout");
+}
+
 export async function crearMovimiento(formData: FormData) {
   const supabase = createClient();
 

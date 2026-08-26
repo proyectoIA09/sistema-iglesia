@@ -93,6 +93,38 @@ create table if not exists public.movimientos_financieros (
 );
 
 -- ============================================================
+-- Configuración de la iglesia: nombre y logo (una sola fila)
+-- ============================================================
+create table if not exists public.configuracion (
+  id int primary key default 1,
+  nombre_iglesia text not null default 'Sistema de Iglesia',
+  logo_url text,
+  actualizado_en timestamptz not null default now(),
+  constraint configuracion_singleton check (id = 1)
+);
+
+insert into public.configuracion (id, nombre_iglesia)
+values (1, 'Sistema de Iglesia')
+on conflict (id) do nothing;
+
+alter table public.configuracion enable row level security;
+create policy "leer configuracion" on public.configuracion for select using (true);
+create policy "admin edita configuracion" on public.configuracion for update using (public.mi_rol() in ('admin','pastor'));
+
+-- Espacio de almacenamiento para el logo de la iglesia
+insert into storage.buckets (id, name, public)
+values ('logos', 'logos', true)
+on conflict (id) do nothing;
+
+create policy "leer logos" on storage.objects for select using (bucket_id = 'logos');
+create policy "admin sube logos" on storage.objects for insert with check (
+  bucket_id = 'logos' and public.mi_rol() in ('admin','pastor')
+);
+create policy "admin reemplaza logos" on storage.objects for update using (
+  bucket_id = 'logos' and public.mi_rol() in ('admin','pastor')
+);
+
+-- ============================================================
 -- Proyectos: fondos con meta y tiempo definido (ej. "Siembra para mi casa")
 -- ============================================================
 create table if not exists public.proyectos (
