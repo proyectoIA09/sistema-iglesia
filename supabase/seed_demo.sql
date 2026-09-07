@@ -108,7 +108,7 @@ with nuevo_proyecto as (
   returning id
 )
 insert into public.aportes_proyecto (proyecto_id, monto, fecha, origen)
-select np.id, a.monto, a.fecha, a.origen
+select np.id, v.monto, a.fecha, a.origen
 from nuevo_proyecto np
 cross join (
   values
