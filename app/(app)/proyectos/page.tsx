@@ -3,12 +3,44 @@ import { createClient } from "@/lib/supabase/server";
 import { registrarAporte } from "@/lib/actions";
 import { formatUSD } from "@/lib/format";
 
+const MESES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
 function mesesRestantes(fechaInicio: string, duracionMeses: number) {
   const inicio = new Date(fechaInicio);
   const fin = new Date(inicio);
   fin.setMonth(fin.getMonth() + duracionMeses);
   const hoy = new Date();
   return (fin.getFullYear() - hoy.getFullYear()) * 12 + (fin.getMonth() - hoy.getMonth());
+}
+
+function historialPorMes(aportes: { monto: number; fecha: string }[]) {
+  const porMes = new Map<string, { total: number; cantidad: number }>();
+
+  for (const a of aportes) {
+    const [anio, mes] = a.fecha.split("-");
+    const key = `${anio}-${mes}`;
+    const actual = porMes.get(key) ?? { total: 0, cantidad: 0 };
+    actual.total += Number(a.monto);
+    actual.cantidad += 1;
+    porMes.set(key, actual);
+  }
+
+  const filas = Array.from(porMes.entries())
+    .map(([key, v]) => {
+      const [anio, mes] = key.split("-").map(Number);
+      return { key, label: `${MESES[mes - 1]} ${anio}`, total: v.total, cantidad: v.cantidad };
+    })
+    .sort((a, b) => (a.key < b.key ? 1 : -1)); // más reciente primero
+
+  const mesMasActivo = filas.reduce(
+    (max, f) => (f.total > (max?.total ?? -1) ? f : max),
+    null as (typeof filas)[number] | null
+  );
+
+  return { filas, mesMasActivo };
 }
 
 export default async function ProyectosPage() {
@@ -19,6 +51,11 @@ export default async function ProyectosPage() {
     .select("*")
     .eq("activo", true)
     .order("fecha_inicio", { ascending: false });
+
+  const { data: todosLosAportes } = await supabase
+    .from("aportes_proyecto")
+    .select("proyecto_id, monto, fecha, origen")
+    .order("fecha", { ascending: false });
 
   return (
     <div className="space-y-6">
@@ -42,6 +79,9 @@ export default async function ProyectosPage() {
             const restantes = mesesRestantes(p.fecha_inicio, p.duracion_meses);
             const restText =
               restantes > 0 ? `${restantes} meses restantes` : restantes === 0 ? "último mes" : "plazo vencido";
+
+            const aportesDelProyecto = todosLosAportes?.filter((a) => a.proyecto_id === p.id) ?? [];
+            const { filas, mesMasActivo } = historialPorMes(aportesDelProyecto);
 
             return (
               <div key={p.id} className="card space-y-3">
@@ -78,24 +118,64 @@ export default async function ProyectosPage() {
                 </div>
                 <p className="text-xs text-brand-400">{restText}</p>
 
-                <details>
-                  <summary className="btn-primary text-sm inline-flex cursor-pointer">+ Registrar aporte</summary>
-                  <form action={registrarAporte.bind(null, p.id)} className="mt-3 space-y-2 max-w-xs">
-                    <div className="grid grid-cols-2 gap-2">
-                      <input name="monto" type="number" min="0.01" step="0.01" required placeholder="Monto ($)" className="input text-sm" />
-                      <input
-                        name="fecha"
-                        type="date"
-                        defaultValue={new Date().toISOString().slice(0, 10)}
-                        className="input text-sm"
-                      />
-                    </div>
-                    <input name="origen" placeholder="Célula o persona (opcional)" className="input text-sm" />
-                    <button type="submit" className="btn-secondary w-full justify-center text-sm">
-                      Guardar aporte
-                    </button>
-                  </form>
-                </details>
+                <div className="flex gap-2 flex-wrap">
+                  <details className="flex-1">
+                    <summary className="btn-primary text-sm inline-flex cursor-pointer">+ Registrar aporte</summary>
+                    <form action={registrarAporte.bind(null, p.id)} className="mt-3 space-y-2 max-w-xs">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input name="monto" type="number" min="0.01" step="0.01" required placeholder="Monto ($)" className="input text-sm" />
+                        <input
+                          name="fecha"
+                          type="date"
+                          defaultValue={new Date().toISOString().slice(0, 10)}
+                          className="input text-sm"
+                        />
+                      </div>
+                      <input name="origen" placeholder="Célula o persona (opcional)" className="input text-sm" />
+                      <button type="submit" className="btn-secondary w-full justify-center text-sm">
+                        Guardar aporte
+                      </button>
+                    </form>
+                  </details>
+
+                  {filas.length > 0 && (
+                    <details className="flex-1">
+                      <summary className="btn-secondary text-sm inline-flex cursor-pointer">
+                        📊 Historial por mes
+                      </summary>
+                      <div className="mt-3 space-y-3">
+                        {mesMasActivo && (
+                          <p className="text-xs text-gold-600 bg-gold-500/10 rounded-lg px-3 py-2">
+                            🏆 Mes más activo: <b>{mesMasActivo.label}</b> — {formatUSD(mesMasActivo.total)} en{" "}
+                            {mesMasActivo.cantidad} aporte{mesMasActivo.cantidad === 1 ? "" : "s"}
+                          </p>
+                        )}
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-brand-400 border-b border-brand-100">
+                                <th className="pb-1.5 font-medium">Mes</th>
+                                <th className="pb-1.5 font-medium text-center">Aportes</th>
+                                <th className="pb-1.5 font-medium text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filas.map((f) => (
+                                <tr key={f.key} className="border-b border-brand-50 last:border-0">
+                                  <td className="py-1.5">
+                                    {f.key === mesMasActivo?.key ? <b>{f.label}</b> : f.label}
+                                  </td>
+                                  <td className="py-1.5 text-center text-brand-500">{f.cantidad}</td>
+                                  <td className="py-1.5 text-right font-medium">{formatUSD(f.total)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </details>
+                  )}
+                </div>
               </div>
             );
           })
