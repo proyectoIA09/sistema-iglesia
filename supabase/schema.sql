@@ -100,6 +100,7 @@ values
   ('Renta de local', 'gasto'),
   ('Misiones', 'gasto'),
   ('Ayuda social', 'gasto'),
+  ('Nómina', 'gasto'),
   ('Otro', 'ingreso'),
   ('Otro', 'gasto')
 on conflict (nombre, tipo) do nothing;
@@ -148,6 +149,49 @@ create policy "leer presupuestos" on public.presupuestos for select using (
   public.mi_rol() in ('admin','pastor','finanzas')
 );
 create policy "gestionar presupuestos" on public.presupuestos for all using (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
+
+-- ============================================================
+-- Planilla: ficha de empleados y boletas de pago (sin deducciones/impuestos)
+-- ============================================================
+create table if not exists public.empleados (
+  id uuid primary key default gen_random_uuid(),
+  nombre_completo text not null,
+  cargo text not null,
+  dui text,
+  telefono text,
+  monto_asignado numeric(12,2) not null check (monto_asignado > 0),
+  activo boolean not null default true,
+  creado_en timestamptz not null default now()
+);
+
+create table if not exists public.planilla_pagos (
+  id uuid primary key default gen_random_uuid(),
+  numero bigserial,
+  empleado_id uuid not null references public.empleados(id) on delete cascade,
+  monto numeric(12,2) not null check (monto > 0),
+  mes_correspondiente text not null,
+  fecha_pago date not null default current_date,
+  notas text,
+  movimiento_id uuid references public.movimientos_financieros(id) on delete set null,
+  creado_por uuid references public.profiles(id),
+  creado_en timestamptz not null default now()
+);
+
+alter table public.empleados enable row level security;
+alter table public.planilla_pagos enable row level security;
+
+create policy "leer empleados" on public.empleados for select using (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
+create policy "gestionar empleados" on public.empleados for all using (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
+create policy "leer planilla" on public.planilla_pagos for select using (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
+create policy "crear planilla" on public.planilla_pagos for insert with check (
   public.mi_rol() in ('admin','pastor','finanzas')
 );
 

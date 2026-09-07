@@ -22,6 +22,7 @@ function linksForRole(role: string, miCelulaId: string | null) {
     { href: "/celulas", label: "Células", icon: "👥" },
     { href: "/finanzas", label: "Finanzas", icon: "💰" },
     { href: "/diezmos", label: "Diezmos", icon: "🧾" },
+    { href: "/planilla", label: "Planilla", icon: "🧑‍💼" },
     { href: "/proyectos", label: "Proyectos", icon: "🎯" },
     { href: "/reportes", label: "Reportes", icon: "📊" },
     { href: "/administracion", label: "Administración", icon: "⚙️" },

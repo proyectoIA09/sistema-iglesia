@@ -377,6 +377,87 @@ export async function eliminarPresupuesto(presupuestoId: string) {
   revalidatePath("/administracion");
 }
 
+export async function crearEmpleado(formData: FormData) {
+  const supabase = createClient();
+
+  await supabase.from("empleados").insert({
+    nombre_completo: formData.get("nombre_completo") as string,
+    cargo: formData.get("cargo") as string,
+    dui: (formData.get("dui") as string) || null,
+    telefono: (formData.get("telefono") as string) || null,
+    monto_asignado: Number(formData.get("monto_asignado")),
+  });
+
+  revalidatePath("/planilla");
+}
+
+export async function desactivarEmpleado(empleadoId: string) {
+  const supabase = createClient();
+  await supabase.from("empleados").update({ activo: false }).eq("id", empleadoId);
+  revalidatePath("/planilla");
+}
+
+export async function reactivarEmpleado(empleadoId: string) {
+  const supabase = createClient();
+  await supabase.from("empleados").update({ activo: true }).eq("id", empleadoId);
+  revalidatePath("/planilla");
+}
+
+export async function registrarPagoPlanilla(formData: FormData) {
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const empleado_id = formData.get("empleado_id") as string;
+  const monto = Number(formData.get("monto"));
+  const mes_correspondiente = formData.get("mes_correspondiente") as string;
+  const fecha_pago = (formData.get("fecha_pago") as string) || new Date().toISOString().slice(0, 10);
+  const notas = (formData.get("notas") as string) || null;
+
+  const { data: empleado } = await supabase
+    .from("empleados")
+    .select("nombre_completo")
+    .eq("id", empleado_id)
+    .single();
+
+  const { data: fondoGeneral } = await supabase
+    .from("fondos")
+    .select("id")
+    .eq("nombre", "Fondo General")
+    .single();
+
+  const { data: movimiento } = await supabase
+    .from("movimientos_financieros")
+    .insert({
+      tipo: "gasto",
+      categoria: "Nómina",
+      monto,
+      fondo_id: fondoGeneral?.id ?? null,
+      fecha: fecha_pago,
+      origen: "otro",
+      descripcion: `Pago de planilla — ${empleado?.nombre_completo ?? ""} (${mes_correspondiente})`,
+      creado_por: user?.id,
+    })
+    .select("id")
+    .single();
+
+  await supabase.from("planilla_pagos").insert({
+    empleado_id,
+    monto,
+    mes_correspondiente,
+    fecha_pago,
+    notas,
+    movimiento_id: movimiento?.id ?? null,
+    creado_por: user?.id,
+  });
+
+  revalidatePath("/planilla");
+  revalidatePath("/finanzas");
+  revalidatePath("/dashboard");
+}
+
 export async function crearDiezmo(formData: FormData) {
   const supabase = createClient();
 
