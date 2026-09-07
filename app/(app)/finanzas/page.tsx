@@ -2,17 +2,40 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatUSD } from "@/lib/format";
 
-export default async function FinanzasPage() {
+export default async function FinanzasPage({
+  searchParams,
+}: {
+  searchParams: { tipo?: string };
+}) {
   const supabase = createClient();
+  const filtro = searchParams.tipo === "ingreso" || searchParams.tipo === "gasto" ? searchParams.tipo : "todos";
 
-  const { data: movimientos } = await supabase
+  const { data: movimientosTotales } = await supabase
+    .from("movimientos_financieros")
+    .select("tipo, monto");
+
+  const ingresos =
+    movimientosTotales?.filter((m) => m.tipo === "ingreso").reduce((s, m) => s + Number(m.monto), 0) ?? 0;
+  const gastos =
+    movimientosTotales?.filter((m) => m.tipo === "gasto").reduce((s, m) => s + Number(m.monto), 0) ?? 0;
+
+  let query = supabase
     .from("movimientos_financieros")
     .select("id, tipo, categoria, monto, fecha, origen, descripcion, fondos(nombre)")
     .order("fecha", { ascending: false })
-    .limit(50);
+    .limit(100);
 
-  const ingresos = movimientos?.filter((m) => m.tipo === "ingreso").reduce((s, m) => s + Number(m.monto), 0) ?? 0;
-  const gastos = movimientos?.filter((m) => m.tipo === "gasto").reduce((s, m) => s + Number(m.monto), 0) ?? 0;
+  if (filtro !== "todos") {
+    query = query.eq("tipo", filtro);
+  }
+
+  const { data: movimientos } = await query;
+
+  const tabs = [
+    { key: "todos", label: "Todos" },
+    { key: "ingreso", label: "Ingresos" },
+    { key: "gasto", label: "Gastos" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -42,7 +65,22 @@ export default async function FinanzasPage() {
       </div>
 
       <div className="card">
-        <h2 className="font-semibold text-brand-950 mb-4">Movimientos recientes</h2>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <h2 className="font-semibold text-brand-950">Movimientos</h2>
+          <div className="inline-flex bg-brand-100/60 rounded-xl p-1 gap-1 text-sm font-medium">
+            {tabs.map((t) => (
+              <Link
+                key={t.key}
+                href={t.key === "todos" ? "/finanzas" : `/finanzas?tipo=${t.key}`}
+                className={`px-3.5 py-1.5 rounded-lg ${
+                  filtro === t.key ? "bg-white shadow-card text-brand-950" : "text-brand-500"
+                }`}
+              >
+                {t.label}
+              </Link>
+            ))}
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
