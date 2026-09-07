@@ -56,6 +56,12 @@ export default async function NuevoMovimientoPage() {
           <textarea name="descripcion" rows={2} className="input" />
         </div>
 
+        <div>
+          <label className="label">Comprobante / recibo (opcional)</label>
+          <input name="comprobante" type="file" accept="image/*,.pdf" className="input" />
+          <p className="field-hint">Foto o PDF de la factura o recibo, para respaldo.</p>
+        </div>
+
         <button type="submit" className="btn-primary w-full">
           Guardar movimiento
         </button>

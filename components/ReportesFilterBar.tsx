@@ -26,7 +26,7 @@ export default function ReportesFilterBar({
   compararActual: string;
 }) {
   const router = useRouter();
-  const opciones = ultimosMeses(6);
+  const opciones = ultimosMeses(24);
 
   function actualizar(param: string, valor: string) {
     const params = new URLSearchParams({ mes: mesActual, comparar: compararActual });

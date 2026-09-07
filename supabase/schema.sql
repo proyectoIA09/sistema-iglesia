@@ -114,8 +114,81 @@ create table if not exists public.movimientos_financieros (
   origen text not null default 'otro' check (origen in ('celula','servicio','donacion','otro')),
   celula_id uuid references public.celulas(id),
   descripcion text,
+  comprobante_url text,
   creado_por uuid references public.profiles(id),
   creado_en timestamptz not null default now()
+);
+
+-- Espacio de almacenamiento para comprobantes/recibos adjuntos
+insert into storage.buckets (id, name, public)
+values ('comprobantes', 'comprobantes', true)
+on conflict (id) do nothing;
+
+create policy "leer comprobantes" on storage.objects for select using (
+  bucket_id = 'comprobantes'
+);
+create policy "subir comprobantes" on storage.objects for insert with check (
+  bucket_id = 'comprobantes' and public.mi_rol() in ('admin','pastor','finanzas')
+);
+
+-- ============================================================
+-- Presupuestos por categoría (mensual, recurrente) y alertas de sobregasto
+-- ============================================================
+create table if not exists public.presupuestos (
+  id uuid primary key default gen_random_uuid(),
+  categoria text not null,
+  tipo text not null check (tipo in ('ingreso','gasto')),
+  monto_esperado numeric(12,2) not null check (monto_esperado > 0),
+  creado_en timestamptz not null default now(),
+  unique (categoria, tipo)
+);
+
+alter table public.presupuestos enable row level security;
+create policy "leer presupuestos" on public.presupuestos for select using (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
+create policy "gestionar presupuestos" on public.presupuestos for all using (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
+
+-- ============================================================
+-- Diezmos por código de sobre (privacidad: no se guarda el nombre en cada registro)
+-- ============================================================
+create table if not exists public.diezmos (
+  id uuid primary key default gen_random_uuid(),
+  codigo_sobre text not null,
+  monto numeric(12,2) not null check (monto > 0),
+  fecha date not null default current_date,
+  notas text,
+  creado_por uuid references public.profiles(id),
+  creado_en timestamptz not null default now()
+);
+
+-- Tabla separada y más restringida: solo aquí se vincula el código con el nombre real
+create table if not exists public.codigos_sobre (
+  codigo text primary key,
+  nombre_real text not null,
+  telefono text,
+  activo boolean not null default true,
+  creado_en timestamptz not null default now()
+);
+
+alter table public.diezmos enable row level security;
+alter table public.codigos_sobre enable row level security;
+
+create policy "leer diezmos" on public.diezmos for select using (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
+create policy "crear diezmos" on public.diezmos for insert with check (
+  public.mi_rol() in ('admin','pastor','finanzas')
+);
+
+-- Solo admin/pastor pueden ver o gestionar la tabla que conecta código -> nombre real
+create policy "leer codigos sobre" on public.codigos_sobre for select using (
+  public.mi_rol() in ('admin','pastor')
+);
+create policy "gestionar codigos sobre" on public.codigos_sobre for all using (
+  public.mi_rol() in ('admin','pastor')
 );
 
 -- ============================================================

@@ -321,6 +321,23 @@ export async function crearMovimiento(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const comprobante = formData.get("comprobante") as File | null;
+  let comprobante_url: string | null = null;
+
+  if (comprobante && comprobante.size > 0) {
+    const extension = comprobante.name.split(".").pop() || "jpg";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("comprobantes")
+      .upload(path, comprobante, { contentType: comprobante.type });
+
+    if (!uploadError) {
+      const { data } = supabase.storage.from("comprobantes").getPublicUrl(path);
+      comprobante_url = data.publicUrl;
+    }
+  }
+
   await supabase.from("movimientos_financieros").insert({
     tipo: formData.get("tipo") as string,
     categoria: formData.get("categoria") as string,
@@ -329,10 +346,69 @@ export async function crearMovimiento(formData: FormData) {
     fecha: formData.get("fecha") as string,
     origen: (formData.get("origen") as string) || "otro",
     descripcion: (formData.get("descripcion") as string) || null,
+    comprobante_url,
     creado_por: user?.id,
   });
 
   revalidatePath("/finanzas");
   revalidatePath("/dashboard");
   redirect("/finanzas");
+}
+
+export async function crearPresupuesto(formData: FormData) {
+  const supabase = createClient();
+
+  const categoria = formData.get("categoria") as string;
+  const tipo = formData.get("tipo") as string;
+  const monto_esperado = Number(formData.get("monto_esperado"));
+
+  await supabase
+    .from("presupuestos")
+    .upsert({ categoria, tipo, monto_esperado }, { onConflict: "categoria,tipo" });
+
+  revalidatePath("/finanzas");
+  revalidatePath("/administracion");
+}
+
+export async function eliminarPresupuesto(presupuestoId: string) {
+  const supabase = createClient();
+  await supabase.from("presupuestos").delete().eq("id", presupuestoId);
+  revalidatePath("/finanzas");
+  revalidatePath("/administracion");
+}
+
+export async function crearDiezmo(formData: FormData) {
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  await supabase.from("diezmos").insert({
+    codigo_sobre: (formData.get("codigo_sobre") as string).trim(),
+    monto: Number(formData.get("monto")),
+    fecha: (formData.get("fecha") as string) || new Date().toISOString().slice(0, 10),
+    notas: (formData.get("notas") as string) || null,
+    creado_por: user?.id,
+  });
+
+  revalidatePath("/diezmos");
+}
+
+export async function crearCodigoSobre(formData: FormData) {
+  const supabase = createClient();
+
+  await supabase.from("codigos_sobre").insert({
+    codigo: (formData.get("codigo") as string).trim(),
+    nombre_real: formData.get("nombre_real") as string,
+    telefono: (formData.get("telefono") as string) || null,
+  });
+
+  revalidatePath("/administracion");
+}
+
+export async function desactivarCodigoSobre(codigo: string) {
+  const supabase = createClient();
+  await supabase.from("codigos_sobre").update({ activo: false }).eq("codigo", codigo);
+  revalidatePath("/administracion");
 }

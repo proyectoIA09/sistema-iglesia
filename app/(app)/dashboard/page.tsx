@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   inicioMes.setDate(1);
   const inicioMesStr = inicioMes.toISOString().slice(0, 10);
 
-  const [{ count: totalCelulas }, { data: reportesMes }, { data: movimientosMes }, { data: ultimosReportes }] =
+  const [{ count: totalCelulas }, { data: reportesMes }, { data: movimientosMes }, { data: ultimosReportes }, { data: celulasActivas }, { data: fechasReportes }] =
     await Promise.all([
       supabase.from("celulas").select("*", { count: "exact", head: true }).eq("activa", true),
       supabase.from("reportes_celula").select("ninos, jovenes, adultos, mayores, visitantes, ofrenda").gte("fecha", inicioMesStr),
@@ -30,7 +30,22 @@ export default async function DashboardPage() {
         .select("fecha, ofrenda, ninos, jovenes, adultos, mayores, visitantes, celulas(nombre)")
         .order("fecha", { ascending: false })
         .limit(5),
+      supabase.from("celulas").select("id, nombre").eq("activa", true),
+      supabase.from("reportes_celula").select("celula_id, fecha").order("fecha", { ascending: false }),
     ]);
+
+  const ultimaFechaPorCelula = new Map<string, string>();
+  for (const r of fechasReportes ?? []) {
+    if (!ultimaFechaPorCelula.has(r.celula_id)) ultimaFechaPorCelula.set(r.celula_id, r.fecha);
+  }
+  const hace14Dias = new Date();
+  hace14Dias.setDate(hace14Dias.getDate() - 14);
+  const hace14DiasStr = hace14Dias.toISOString().slice(0, 10);
+
+  const celulasSinReportar = (celulasActivas ?? []).filter((c) => {
+    const ultima = ultimaFechaPorCelula.get(c.id);
+    return !ultima || ultima < hace14DiasStr;
+  });
 
   const totalAsistentes =
     reportesMes?.reduce(
@@ -63,6 +78,22 @@ export default async function DashboardPage() {
           />
         )}
       </div>
+
+      {celulasSinReportar.length > 0 && (
+        <div className="card border-gold-500/40 bg-gold-500/5">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">⚠️</span>
+            <div>
+              <p className="font-semibold text-brand-950">
+                {celulasSinReportar.length} célula{celulasSinReportar.length === 1 ? "" : "s"} sin reportar en 2+ semanas
+              </p>
+              <p className="text-sm text-brand-500 mt-0.5">
+                {celulasSinReportar.map((c) => c.nombre).join(" · ")}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="card lg:col-span-2">

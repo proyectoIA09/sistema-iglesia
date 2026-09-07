@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion, crearUsuarioConRol, desactivarPersona, reactivarPersona, crearCategoriaFinanciera } from "@/lib/actions";
+import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion, crearUsuarioConRol, desactivarPersona, reactivarPersona, crearCategoriaFinanciera, crearPresupuesto, eliminarPresupuesto, crearCodigoSobre, desactivarCodigoSobre } from "@/lib/actions";
 import { getConfiguracion } from "@/lib/config";
 
 export default async function AdministracionPage({
@@ -9,10 +9,10 @@ export default async function AdministracionPage({
   searchParams: { tab?: string };
 }) {
   const supabase = createClient();
-  const validTabs = ["lideres", "supervisores", "celulas", "zonas", "categorias", "configuracion"];
+  const validTabs = ["lideres", "supervisores", "celulas", "zonas", "categorias", "presupuestos", "codigos", "configuracion"];
   const tab = validTabs.includes(searchParams.tab ?? "") ? (searchParams.tab as string) : "lideres";
 
-  const [{ data: lideres }, { data: supervisores }, { data: celulas }, { data: zonas }, { data: categoriasFin }, config] = await Promise.all([
+  const [{ data: lideres }, { data: supervisores }, { data: celulas }, { data: zonas }, { data: categoriasFin }, { data: presupuestos }, { data: codigosSobre }, config] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, nombre_completo, telefono, activo, celulas(nombre, zonas(nombre))")
@@ -29,6 +29,8 @@ export default async function AdministracionPage({
       .order("nombre"),
     supabase.from("zonas").select("id, nombre, supervisor_id").order("nombre"),
     supabase.from("categorias_financieras").select("id, nombre, tipo, activa").order("tipo").order("nombre"),
+    supabase.from("presupuestos").select("id, categoria, tipo, monto_esperado").order("tipo").order("categoria"),
+    supabase.from("codigos_sobre").select("codigo, nombre_real, telefono, activo").order("codigo"),
     getConfiguracion(supabase),
   ]);
 
@@ -38,6 +40,8 @@ export default async function AdministracionPage({
     { key: "celulas", label: "Células" },
     { key: "zonas", label: "Zonas" },
     { key: "categorias", label: "Categorías" },
+    { key: "presupuestos", label: "Presupuestos" },
+    { key: "codigos", label: "Códigos de sobre" },
     { key: "configuracion", label: "Configuración" },
   ];
 
@@ -376,6 +380,164 @@ export default async function AdministracionPage({
               </div>
               <button type="submit" className="btn-primary w-full">
                 Crear categoría
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {tab === "presupuestos" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="card">
+            <h2 className="font-semibold text-brand-950 mb-4">Presupuestos definidos</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-brand-400 border-b border-brand-100">
+                    <th className="pb-2 font-medium">Categoría</th>
+                    <th className="pb-2 font-medium">Tipo</th>
+                    <th className="pb-2 font-medium text-right">Monto/mes</th>
+                    <th className="pb-2 font-medium"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {presupuestos?.length ? (
+                    presupuestos.map((p) => (
+                      <tr key={p.id} className="border-b border-brand-50 last:border-0">
+                        <td className="py-2">{p.categoria}</td>
+                        <td className="py-2 text-brand-500">{p.tipo === "ingreso" ? "Ingreso" : "Gasto"}</td>
+                        <td className="py-2 text-right">${Number(p.monto_esperado).toFixed(2)}</td>
+                        <td className="py-2 text-right">
+                          <form action={eliminarPresupuesto.bind(null, p.id)}>
+                            <button type="submit" className="text-xs text-red-600 underline underline-offset-2">
+                              Quitar
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-brand-400">
+                        Aún no hay presupuestos definidos.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="card">
+            <h2 className="font-semibold text-brand-950 mb-4">Definir presupuesto</h2>
+            <p className="text-brand-500 text-sm mb-4">
+              Si ya existe uno para esa categoría y tipo, se actualiza el monto.
+            </p>
+            <form action={crearPresupuesto} className="space-y-4">
+              <div>
+                <label className="label">Categoría</label>
+                <select name="categoria" required className="input">
+                  {categoriasFin?.map((c) => (
+                    <option key={c.id} value={c.nombre}>
+                      {c.nombre} ({c.tipo === "ingreso" ? "Ingreso" : "Gasto"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">Tipo</label>
+                <select name="tipo" required className="input">
+                  <option value="gasto">Gasto</option>
+                  <option value="ingreso">Ingreso</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Monto esperado por mes ($)</label>
+                <input name="monto_esperado" type="number" min="0.01" step="0.01" required className="input" />
+              </div>
+              <button type="submit" className="btn-primary w-full">
+                Guardar presupuesto
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {tab === "codigos" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="card">
+            <h2 className="font-semibold text-brand-950 mb-1">Códigos de sobre</h2>
+            <p className="text-brand-500 text-sm mb-4">
+              Solo administradores/pastor ven esta tabla. El registro diario de diezmos usa únicamente el código,
+              nunca el nombre.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-brand-400 border-b border-brand-100">
+                    <th className="pb-2 font-medium">Código</th>
+                    <th className="pb-2 font-medium">Nombre real</th>
+                    <th className="pb-2 font-medium">Teléfono</th>
+                    <th className="pb-2 font-medium">Estado</th>
+                    <th className="pb-2 font-medium"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {codigosSobre?.length ? (
+                    codigosSobre.map((c) => (
+                      <tr key={c.codigo} className="border-b border-brand-50 last:border-0">
+                        <td className="py-2 font-mono">{c.codigo}</td>
+                        <td className="py-2">{c.nombre_real}</td>
+                        <td className="py-2 text-brand-500">{c.telefono ?? "—"}</td>
+                        <td className="py-2">
+                          <span
+                            className={`text-[11px] font-bold uppercase px-2 py-0.5 rounded ${
+                              c.activo ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"
+                            }`}
+                          >
+                            {c.activo ? "Activo" : "Inactivo"}
+                          </span>
+                        </td>
+                        <td className="py-2 text-right">
+                          {c.activo && (
+                            <form action={desactivarCodigoSobre.bind(null, c.codigo)}>
+                              <button type="submit" className="text-xs text-red-600 underline underline-offset-2">
+                                Desactivar
+                              </button>
+                            </form>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-center text-brand-400">
+                        Aún no hay códigos registrados.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="card">
+            <h2 className="font-semibold text-brand-950 mb-4">Asignar nuevo código</h2>
+            <form action={crearCodigoSobre} className="space-y-4">
+              <div>
+                <label className="label">Código del sobre</label>
+                <input name="codigo" required className="input" placeholder="Ej. 014" />
+              </div>
+              <div>
+                <label className="label">Nombre real (privado)</label>
+                <input name="nombre_real" required className="input" placeholder="Nombre completo del hermano/a" />
+              </div>
+              <div>
+                <label className="label">Teléfono (opcional)</label>
+                <input name="telefono" className="input" />
+              </div>
+              <button type="submit" className="btn-primary w-full">
+                Guardar código
               </button>
             </form>
           </div>
