@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatUSD } from "@/lib/format";
 import { crearEmpleado, desactivarEmpleado, reactivarEmpleado, registrarPagoPlanilla } from "@/lib/actions";
+import ExportarCSV from "@/components/ExportarCSV";
 
 export default async function PlanillaPage({
   searchParams,
@@ -22,6 +23,15 @@ export default async function PlanillaPage({
   ]);
 
   const hoy = new Date().toISOString().slice(0, 10);
+
+  const porMesPago = new Map<string, { total: number; cantidad: number }>();
+  for (const p of pagos ?? []) {
+    const actual = porMesPago.get(p.mes_correspondiente) ?? { total: 0, cantidad: 0 };
+    actual.total += Number(p.monto);
+    actual.cantidad += 1;
+    porMesPago.set(p.mes_correspondiente, actual);
+  }
+  const resumenPorMes = Array.from(porMesPago.entries()).map(([mes, v]) => ({ mes, ...v }));
 
   return (
     <div className="space-y-6">
@@ -50,7 +60,26 @@ export default async function PlanillaPage({
       {tab === "empleados" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
-            <h2 className="font-semibold text-brand-950 mb-4">Personal</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-brand-950">Personal</h2>
+              <ExportarCSV
+                filas={(empleados ?? []).map((e) => ({
+                  nombre: e.nombre_completo,
+                  cargo: e.cargo,
+                  dui: e.dui ?? "",
+                  monto_asignado: Number(e.monto_asignado).toFixed(2),
+                  estado: e.activo ? "Activo" : "Inactivo",
+                }))}
+                columnas={[
+                  { key: "nombre", label: "Nombre" },
+                  { key: "cargo", label: "Cargo" },
+                  { key: "dui", label: "DUI" },
+                  { key: "monto_asignado", label: "Monto asignado" },
+                  { key: "estado", label: "Estado" },
+                ]}
+                nombreArchivo="planilla-empleados.csv"
+              />
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -144,8 +173,46 @@ export default async function PlanillaPage({
 
       {tab === "pagos" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {resumenPorMes.length > 0 && (
+            <div className="card lg:col-span-2">
+              <h2 className="font-semibold text-brand-950 mb-3">Total pagado por mes</h2>
+              <div className="flex flex-wrap gap-3">
+                {resumenPorMes.map((r) => (
+                  <div key={r.mes} className="px-3 py-2 rounded-lg bg-brand-50 text-sm">
+                    <span className="text-brand-500">{r.mes}: </span>
+                    <b className="text-brand-950">{formatUSD(r.total)}</b>
+                    <span className="text-brand-400"> ({r.cantidad} pago{r.cantidad === 1 ? "" : "s"})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="card lg:col-span-2">
-            <h2 className="font-semibold text-brand-950 mb-4">Historial de pagos</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-brand-950">Historial de pagos</h2>
+              <ExportarCSV
+                filas={(pagos ?? []).map((p: any) => ({
+                  numero: p.numero,
+                  empleado: p.empleados?.nombre_completo ?? "",
+                  cargo: p.empleados?.cargo ?? "",
+                  mes: p.mes_correspondiente,
+                  fecha_pago: p.fecha_pago,
+                  monto: Number(p.monto).toFixed(2),
+                  notas: p.notas ?? "",
+                }))}
+                columnas={[
+                  { key: "numero", label: "No. boleta" },
+                  { key: "empleado", label: "Empleado" },
+                  { key: "cargo", label: "Cargo" },
+                  { key: "mes", label: "Mes" },
+                  { key: "fecha_pago", label: "Fecha de pago" },
+                  { key: "monto", label: "Monto" },
+                  { key: "notas", label: "Notas" },
+                ]}
+                nombreArchivo="planilla-pagos.csv"
+              />
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
