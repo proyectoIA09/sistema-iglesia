@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import SubmitButton from "@/components/SubmitButton";
 import { crearMovimiento } from "@/lib/actions";
 import MovimientoTipoCategoria from "@/components/MovimientoTipoCategoria";
 
@@ -62,9 +63,9 @@ export default async function NuevoMovimientoPage() {
           <p className="field-hint">Foto o PDF de la factura o recibo, para respaldo.</p>
         </div>
 
-        <button type="submit" className="btn-primary w-full">
+        <SubmitButton className="btn-primary w-full">
           Guardar movimiento
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

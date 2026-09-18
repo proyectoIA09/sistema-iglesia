@@ -1,4 +1,5 @@
 import { crearProyecto } from "@/lib/actions";
+import SubmitButton from "@/components/SubmitButton";
 
 export default function NuevoProyectoPage() {
   const hoy = new Date().toISOString().slice(0, 10);
@@ -37,9 +38,9 @@ export default function NuevoProyectoPage() {
           <textarea name="descripcion" rows={2} className="input" placeholder="Para quién es y por qué" />
         </div>
 
-        <button type="submit" className="btn-primary w-full">
+        <SubmitButton className="btn-primary w-full">
           Crear proyecto
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

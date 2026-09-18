@@ -48,7 +48,7 @@ export default function VisitorRegistryField() {
           </thead>
           <tbody>
             {visitantes.map((v, i) => (
-              <tr key={i}>
+              <tr key={i} className="animate-fade-in-down">
                 <td className="pb-2 pr-2">
                   <input
                     name="visitante_nombre[]"
@@ -82,7 +82,7 @@ export default function VisitorRegistryField() {
                   <button
                     type="button"
                     onClick={() => quitar(i)}
-                    className="w-7 h-7 rounded-lg bg-red-50 text-red-600 text-sm"
+                    className="w-7 h-7 rounded-lg bg-red-50 text-red-600 text-sm transition-transform duration-150 ease-out-strong active:scale-90"
                   >
                     ×
                   </button>

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import SubmitButton from "@/components/SubmitButton";
 import { crearDiezmo } from "@/lib/actions";
 import { formatUSD } from "@/lib/format";
 import ExportarCSV from "@/components/ExportarCSV";
@@ -99,9 +100,9 @@ export default async function DiezmosPage() {
               <label className="label">Notas (opcional)</label>
               <textarea name="notas" rows={2} className="input" />
             </div>
-            <button type="submit" className="btn-primary w-full">
+            <SubmitButton className="btn-primary w-full">
               Guardar diezmo
-            </button>
+            </SubmitButton>
           </form>
         </div>
 

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import SubmitButton from "@/components/SubmitButton";
 import { crearReporteCelula } from "@/lib/actions";
 import { notFound } from "next/navigation";
 import VisitorRegistryField from "@/components/VisitorRegistryField";
@@ -78,9 +79,9 @@ export default async function ReporteCelulaPage({ params }: { params: { id: stri
           <textarea name="notas" rows={3} className="input" placeholder="Decisiones, peticiones, observaciones..." />
         </div>
 
-        <button type="submit" className="btn-primary w-full">
+        <SubmitButton className="btn-primary w-full">
           Guardar reporte
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

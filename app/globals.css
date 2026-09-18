@@ -25,11 +25,60 @@ body {
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-800 transition-[background-color,transform] duration-150 ease-out-strong active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-brand-700 border border-brand-200 hover:bg-brand-50 transition-colors;
+  @apply inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-brand-700 border border-brand-200 hover:bg-brand-50 transition-[background-color,transform] duration-150 ease-out-strong active:scale-[0.98];
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 500ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.animate-fade-in-up-delayed {
+  animation: fade-in-up 500ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: 80ms;
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-fade-in-up-delayed,
+  .animate-fade-in-down {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .btn-primary,
+  .btn-secondary {
+    transition-property: background-color;
+  }
 }
 
 .input {

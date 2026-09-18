@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import SubmitButton from "@/components/SubmitButton";
 import { crearCelula } from "@/lib/actions";
 
 export default async function NuevaCelulaPage() {
@@ -51,9 +52,9 @@ export default async function NuevaCelulaPage() {
           <input name="ubicacion" className="input" placeholder="Dirección o modalidad (virtual)" />
         </div>
 
-        <button type="submit" className="btn-primary w-full">
+        <SubmitButton className="btn-primary w-full">
           Guardar célula
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

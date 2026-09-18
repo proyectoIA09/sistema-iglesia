@@ -26,7 +26,9 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
+  const isResetPasswordRoute = request.nextUrl.pathname.startsWith("/reset-password");
+  const isLoginRoute = request.nextUrl.pathname.startsWith("/login");
+  const isAuthRoute = isLoginRoute || isResetPasswordRoute;
   const isPublicAsset = request.nextUrl.pathname.startsWith("/_next");
 
   if (!user && !isAuthRoute && !isPublicAsset) {
@@ -35,7 +37,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  // /reset-password se permite siempre, incluso con sesión activa: es donde
+  // aterriza el enlace de recuperación, que ya trae una sesión temporal.
+  if (user && isLoginRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

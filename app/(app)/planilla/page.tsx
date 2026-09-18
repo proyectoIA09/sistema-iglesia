@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SubmitButton from "@/components/SubmitButton";
 import { createClient } from "@/lib/supabase/server";
 import { formatUSD } from "@/lib/format";
 import { crearEmpleado, desactivarEmpleado, reactivarEmpleado, registrarPagoPlanilla } from "@/lib/actions";
@@ -112,15 +113,15 @@ export default async function PlanillaPage({
                         <td className="py-2 text-right">
                           {e.activo ? (
                             <form action={desactivarEmpleado.bind(null, e.id)}>
-                              <button type="submit" className="text-xs text-red-600 underline underline-offset-2">
+                              <SubmitButton className="text-xs text-red-600 underline underline-offset-2">
                                 Dar de baja
-                              </button>
+                              </SubmitButton>
                             </form>
                           ) : (
                             <form action={reactivarEmpleado.bind(null, e.id)}>
-                              <button type="submit" className="text-xs text-emerald-600 underline underline-offset-2">
+                              <SubmitButton className="text-xs text-emerald-600 underline underline-offset-2">
                                 Reactivar
-                              </button>
+                              </SubmitButton>
                             </form>
                           )}
                         </td>
@@ -163,9 +164,9 @@ export default async function PlanillaPage({
                 <label className="label">Monto asignado a recibir ($)</label>
                 <input name="monto_asignado" type="number" min="0.01" step="0.01" required className="input" />
               </div>
-              <button type="submit" className="btn-primary w-full">
+              <SubmitButton className="btn-primary w-full">
                 Guardar empleado
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -290,9 +291,9 @@ export default async function PlanillaPage({
                 <label className="label">Notas (opcional)</label>
                 <textarea name="notas" rows={2} className="input" />
               </div>
-              <button type="submit" className="btn-primary w-full">
+              <SubmitButton className="btn-primary w-full">
                 Registrar pago y generar boleta
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>

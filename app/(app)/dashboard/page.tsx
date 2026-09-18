@@ -80,7 +80,7 @@ export default async function DashboardPage() {
       </div>
 
       {celulasSinReportar.length > 0 && (
-        <div className="card border-gold-500/40 bg-gold-500/5">
+        <div className="card border-gold-500/40 bg-gold-500/5 animate-fade-in-down">
           <div className="flex items-start gap-3">
             <span className="text-xl">⚠️</span>
             <div>

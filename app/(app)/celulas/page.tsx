@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SubmitButton from "@/components/SubmitButton";
 import { createClient } from "@/lib/supabase/server";
 import { desactivarCelula, reactivarCelula } from "@/lib/actions";
 
@@ -88,9 +89,9 @@ export default async function CelulasPage({
                       defaultValue={new Date().toISOString().slice(0, 10)}
                       className="input text-xs py-1.5"
                     />
-                    <button type="submit" className="w-full text-xs py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
+                    <SubmitButton className="w-full text-xs py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
                       Confirmar desactivación
-                    </button>
+                    </SubmitButton>
                   </form>
                 </details>
               </div>
@@ -109,9 +110,9 @@ export default async function CelulasPage({
                   </p>
                 )}
                 <form action={reactivarCelula.bind(null, c.id)} className="mt-4">
-                  <button type="submit" className="btn-secondary w-full justify-center">
+                  <SubmitButton className="btn-secondary w-full justify-center">
                     ↺ Reactivar célula
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
             )

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SubmitButton from "@/components/SubmitButton";
 import { createClient } from "@/lib/supabase/server";
 import { actualizarPersona, actualizarCelula, crearZona, actualizarConfiguracion, crearUsuarioConRol, desactivarPersona, reactivarPersona, crearCategoriaFinanciera, crearPresupuesto, eliminarPresupuesto, crearCodigoSobre, desactivarCodigoSobre } from "@/lib/actions";
 import { getConfiguracion } from "@/lib/config";
@@ -78,9 +79,9 @@ export default async function AdministracionPage({
               <input name="telefono" placeholder="Teléfono (opcional)" className="input" />
               <input name="correo" type="email" required placeholder="Correo" className="input sm:col-span-2" />
               <input name="password" type="text" required placeholder="Contraseña temporal" className="input sm:col-span-2" />
-              <button type="submit" className="btn-primary sm:col-span-2">
+              <SubmitButton className="btn-primary sm:col-span-2">
                 Crear líder
-              </button>
+              </SubmitButton>
             </form>
           </details>
           <div className="overflow-x-auto">
@@ -120,21 +121,21 @@ export default async function AdministracionPage({
                           <form action={actualizarPersona.bind(null, p.id)} className="space-y-2">
                             <input name="nombre_completo" defaultValue={p.nombre_completo} className="input text-xs py-1.5" />
                             <input name="telefono" defaultValue={p.telefono ?? ""} placeholder="Teléfono" className="input text-xs py-1.5" />
-                            <button type="submit" className="btn-primary w-full text-xs py-1.5">
+                            <SubmitButton className="btn-primary w-full text-xs py-1.5">
                               Guardar
-                            </button>
+                            </SubmitButton>
                           </form>
                           {p.activo ? (
                             <form action={desactivarPersona.bind(null, p.id)}>
-                              <button type="submit" className="w-full text-xs py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
+                              <SubmitButton className="w-full text-xs py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
                                 Desactivar acceso
-                              </button>
+                              </SubmitButton>
                             </form>
                           ) : (
                             <form action={reactivarPersona.bind(null, p.id)}>
-                              <button type="submit" className="w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-medium">
+                              <SubmitButton className="w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-medium">
                                 Reactivar acceso
-                              </button>
+                              </SubmitButton>
                             </form>
                           )}
                         </div>
@@ -166,9 +167,9 @@ export default async function AdministracionPage({
               </select>
               <input name="correo" type="email" required placeholder="Correo" className="input sm:col-span-2" />
               <input name="password" type="text" required placeholder="Contraseña temporal" className="input sm:col-span-2" />
-              <button type="submit" className="btn-primary sm:col-span-2">
+              <SubmitButton className="btn-primary sm:col-span-2">
                 Crear supervisor
-              </button>
+              </SubmitButton>
             </form>
           </details>
           <div className="overflow-x-auto">
@@ -206,21 +207,21 @@ export default async function AdministracionPage({
                           <form action={actualizarPersona.bind(null, p.id)} className="space-y-2">
                             <input name="nombre_completo" defaultValue={p.nombre_completo} className="input text-xs py-1.5" />
                             <input name="telefono" defaultValue={p.telefono ?? ""} placeholder="Teléfono" className="input text-xs py-1.5" />
-                            <button type="submit" className="btn-primary w-full text-xs py-1.5">
+                            <SubmitButton className="btn-primary w-full text-xs py-1.5">
                               Guardar
-                            </button>
+                            </SubmitButton>
                           </form>
                           {p.activo ? (
                             <form action={desactivarPersona.bind(null, p.id)}>
-                              <button type="submit" className="w-full text-xs py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
+                              <SubmitButton className="w-full text-xs py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
                                 Desactivar acceso
-                              </button>
+                              </SubmitButton>
                             </form>
                           ) : (
                             <form action={reactivarPersona.bind(null, p.id)}>
-                              <button type="submit" className="w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-medium">
+                              <SubmitButton className="w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-medium">
                                 Reactivar acceso
-                              </button>
+                              </SubmitButton>
                             </form>
                           )}
                         </div>
@@ -284,9 +285,9 @@ export default async function AdministracionPage({
                           <input name="dia_semana" defaultValue={c.dia_semana ?? ""} placeholder="Día" className="input text-xs py-1.5" />
                           <input name="hora" type="time" defaultValue={c.hora ?? ""} className="input text-xs py-1.5" />
                           <input name="ubicacion" defaultValue={c.ubicacion ?? ""} placeholder="Ubicación" className="input text-xs py-1.5" />
-                          <button type="submit" className="btn-primary w-full text-xs py-1.5">
+                          <SubmitButton className="btn-primary w-full text-xs py-1.5">
                             Guardar
-                          </button>
+                          </SubmitButton>
                         </form>
                       </details>
                     </td>
@@ -322,9 +323,9 @@ export default async function AdministracionPage({
                 <label className="label">Nombre de la zona</label>
                 <input name="nombre" required className="input" placeholder="Ej. Zona Norte" />
               </div>
-              <button type="submit" className="btn-primary w-full">
+              <SubmitButton className="btn-primary w-full">
                 Crear zona
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -378,9 +379,9 @@ export default async function AdministracionPage({
                   <option value="gasto">Gasto</option>
                 </select>
               </div>
-              <button type="submit" className="btn-primary w-full">
+              <SubmitButton className="btn-primary w-full">
                 Crear categoría
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -409,9 +410,9 @@ export default async function AdministracionPage({
                         <td className="py-2 text-right">${Number(p.monto_esperado).toFixed(2)}</td>
                         <td className="py-2 text-right">
                           <form action={eliminarPresupuesto.bind(null, p.id)}>
-                            <button type="submit" className="text-xs text-red-600 underline underline-offset-2">
+                            <SubmitButton className="text-xs text-red-600 underline underline-offset-2">
                               Quitar
-                            </button>
+                            </SubmitButton>
                           </form>
                         </td>
                       </tr>
@@ -455,9 +456,9 @@ export default async function AdministracionPage({
                 <label className="label">Monto esperado por mes ($)</label>
                 <input name="monto_esperado" type="number" min="0.01" step="0.01" required className="input" />
               </div>
-              <button type="submit" className="btn-primary w-full">
+              <SubmitButton className="btn-primary w-full">
                 Guardar presupuesto
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -501,9 +502,9 @@ export default async function AdministracionPage({
                         <td className="py-2 text-right">
                           {c.activo && (
                             <form action={desactivarCodigoSobre.bind(null, c.codigo)}>
-                              <button type="submit" className="text-xs text-red-600 underline underline-offset-2">
+                              <SubmitButton className="text-xs text-red-600 underline underline-offset-2">
                                 Desactivar
-                              </button>
+                              </SubmitButton>
                             </form>
                           )}
                         </td>
@@ -536,9 +537,9 @@ export default async function AdministracionPage({
                 <label className="label">Teléfono (opcional)</label>
                 <input name="telefono" className="input" />
               </div>
-              <button type="submit" className="btn-primary w-full">
+              <SubmitButton className="btn-primary w-full">
                 Guardar código
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -572,9 +573,9 @@ export default async function AdministracionPage({
               <input name="logo" type="file" accept="image/*" className="input" />
               <p className="field-hint">Formato cuadrado recomendado (PNG o JPG).</p>
             </div>
-            <button type="submit" className="btn-primary w-full">
+            <SubmitButton className="btn-primary w-full">
               Guardar cambios
-            </button>
+            </SubmitButton>
           </form>
         </div>
       )}

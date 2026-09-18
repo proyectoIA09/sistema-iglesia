@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SubmitButton from "@/components/SubmitButton";
 import { createClient } from "@/lib/supabase/server";
 import { registrarAporte } from "@/lib/actions";
 import { formatUSD } from "@/lib/format";
@@ -132,9 +133,9 @@ export default async function ProyectosPage() {
                         />
                       </div>
                       <input name="origen" placeholder="Célula o persona (opcional)" className="input text-sm" />
-                      <button type="submit" className="btn-secondary w-full justify-center text-sm">
+                      <SubmitButton className="btn-secondary w-full justify-center text-sm">
                         Guardar aporte
-                      </button>
+                      </SubmitButton>
                     </form>
                   </details>
 
