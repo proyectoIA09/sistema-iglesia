@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import AnimatedBackground from "@/components/AnimatedBackground";
 
 export default function LoginForm({
   nombreIglesia,
@@ -58,14 +59,15 @@ export default function LoginForm({
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-b from-brand-900 to-brand-700 px-4 overflow-hidden">
+    <div className="min-h-screen relative flex items-center justify-center px-4 overflow-hidden">
+      <AnimatedBackground variant="dark" />
       {logoUrl && (
         <div
           className="absolute inset-0 bg-cover bg-center opacity-20"
           style={{ backgroundImage: `url(${logoUrl})` }}
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-brand-900/80 to-brand-700/90" />
+      <div className="absolute inset-0 bg-gradient-to-b from-brand-900/45 to-brand-700/55" />
 
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8 animate-fade-in-up">
